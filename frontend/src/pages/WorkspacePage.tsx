@@ -131,12 +131,21 @@ function PatentCard({
       {/* Expanded Content */}
       {expanded && (
         <div style={{ marginBottom: '0.875rem' }}>
-          {patent.abstract && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Abstract</div>
+          {/* Abstract — always shown in expanded view */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Abstract</div>
+            {patent.abstract && patent.abstract.length > 5 ? (
               <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{patent.abstract}</p>
-            </div>
-          )}
+            ) : (
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                Abstract not available in database. &nbsp;
+                <a href={patent.patent_url || `https://patents.google.com/patent/${patent.patent_number}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+                  View full patent on Google Patents →
+                </a>
+              </p>
+            )}
+          </div>
+
 
           {/* AI Explanation */}
           {patent.explanation && (

@@ -48,8 +48,10 @@ async def verify_and_enrich_patent(patent: dict) -> Optional[dict]:
     if not pn or not source:
         return None
         
+    # Empty title is OK — assign a default rather than rejecting
     if not title:
         patent["title"] = "Title Not Available"
+
 
     v_status = {
         "surechembl": source == "surechembl", 
