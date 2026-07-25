@@ -121,7 +121,7 @@ async def retrieve_patents(
     pubchem_metadata = await get_compound_metadata(smiles)
 
     # 2. Build Expanded Vocabulary
-    vocab = build_search_vocabulary(target, indication, pubchem_metadata)
+    vocab = build_search_vocabulary(target, indication, pubchem_metadata, smiles)
     logger.info(f"Generated {len(vocab)} unique search terms")
 
     # 3. Dual Pipeline Execution

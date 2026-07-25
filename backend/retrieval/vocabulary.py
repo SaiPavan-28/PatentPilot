@@ -8,7 +8,8 @@ import re
 def build_search_vocabulary(
     target: Optional[str],
     indication: Optional[str],
-    pubchem_metadata: Dict
+    pubchem_metadata: Dict,
+    smiles: str = ""
 ) -> List[str]:
     """
     Build an expanded, deduplicated search vocabulary.
@@ -19,6 +20,7 @@ def build_search_vocabulary(
     - CAS number
     - Target
     - Disease
+    - SMILES string
     """
     vocab = set()
     
@@ -51,6 +53,10 @@ def build_search_vocabulary(
         if term.startswith("inchi="):
             continue
         filtered_vocab.append(term)
+        
+    # ALWAYS add the SMILES string explicitly as the ultimate semantic fallback
+    if smiles:
+        filtered_vocab.append(smiles)
         
     # Sort for deterministic output (longest terms first often helps exact match strategies, 
     # but here we just sort alphabetically)
