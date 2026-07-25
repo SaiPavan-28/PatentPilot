@@ -62,6 +62,38 @@ async def explain_query(request: MoleculeSubmitRequest):
     return insights
 
 
+@router.get("/molecule/name-to-smiles", tags=["Molecule"])
+async def name_to_smiles(name: str):
+    """
+    Look up Canonical or Isomeric SMILES by molecule name using PubChem API.
+    """
+    import httpx, urllib.parse
+    if not name or not name.strip():
+        raise HTTPException(status_code=400, detail="Molecule name is required")
+        
+    encoded_name = urllib.parse.quote(name.strip())
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{encoded_name}/property/CanonicalSMILES,IsomericSMILES,Title/JSON"
+    
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200:
+                data = resp.json()
+                props = data.get("PropertyTable", {}).get("Properties", [])
+                if props:
+                    p = props[0]
+                    smiles = p.get("SMILES") or p.get("ConnectivitySMILES") or p.get("CanonicalSMILES") or p.get("IsomericSMILES")
+                    title = p.get("Title", name)
+                    if smiles:
+                        return {"name": name, "title": title, "smiles": smiles, "found": True}
+            return {"name": name, "smiles": None, "found": False}
+    except Exception as e:
+        logger.warning(f"Name to SMILES lookup failed for '{name}': {e}")
+        return {"name": name, "smiles": None, "found": False}
+
+
+
+
 
 @router.post("/molecule/submit", response_model=AnalysisCreateResponse, tags=["Molecule"])
 async def submit_molecule(

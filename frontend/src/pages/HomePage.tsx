@@ -23,9 +23,30 @@ export default function HomePage() {
   const [validation, setValidation] = useState<any>(null);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [lookingUpName, setLookingUpName] = useState(false);
+  const [autoFilledNotice, setAutoFilledNotice] = useState('');
   const [error, setError] = useState('');
 
   const debouncedSmiles = useDebounce(smiles, 600);
+  const debouncedMoleculeName = useDebounce(moleculeName, 600);
+
+  // Auto-lookup SMILES from Molecule Name
+  useEffect(() => {
+    const trimmedName = debouncedMoleculeName.trim();
+    if (!trimmedName || trimmedName.length < 2) return;
+    
+    // Only auto-fill if smiles is empty or was previously auto-filled
+    setLookingUpName(true);
+    api.nameToSmiles(trimmedName)
+      .then(res => {
+        if (res.found && res.smiles) {
+          setSmiles(res.smiles);
+          setAutoFilledNotice(`✨ Auto-populated SMILES from PubChem for "${trimmedName}"`);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLookingUpName(false));
+  }, [debouncedMoleculeName]);
 
   // Auto-validate on SMILES change
   useEffect(() => {
@@ -36,6 +57,25 @@ export default function HomePage() {
       .catch(() => setValidation({ valid: false, error: 'Validation failed' }))
       .finally(() => setValidating(false));
   }, [debouncedSmiles]);
+
+  const handleManualNameLookup = async () => {
+    if (!moleculeName.trim()) return;
+    setLookingUpName(true);
+    setAutoFilledNotice('');
+    try {
+      const res = await api.nameToSmiles(moleculeName.strip ? moleculeName.trim() : moleculeName);
+      if (res.found && res.smiles) {
+        setSmiles(res.smiles);
+        setAutoFilledNotice(`✨ Found & filled SMILES for "${moleculeName}"`);
+      } else {
+        setError(`Could not find SMILES for "${moleculeName}". Please paste SMILES manually.`);
+      }
+    } catch (err: any) {
+      setError('Name lookup failed');
+    } finally {
+      setLookingUpName(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +99,9 @@ export default function HomePage() {
     setTarget(exTarget);
     setIndication(exIndication);
     setMoleculeName(exName);
+    setAutoFilledNotice('');
   };
+
 
   return (
     <div className="animate-fadeInUp">
@@ -90,6 +132,36 @@ export default function HomePage() {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Molecule name (Type name to auto-fill SMILES) */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="name-input">
+                Molecule Name <span style={{ color: 'var(--color-primary-light)', fontSize: '0.75rem', fontWeight: 600 }}>(Type a drug name to auto-fill SMILES)</span>
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  id="name-input"
+                  className="form-input"
+                  placeholder="e.g. Aspirin, Imatinib, Ibuprofen, Sildenafil, Paracetamol"
+                  value={moleculeName}
+                  onChange={e => {
+                    setMoleculeName(e.target.value);
+                    setAutoFilledNotice('');
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleManualNameLookup}
+                  disabled={lookingUpName || !moleculeName.trim()}
+                  style={{ flexShrink: 0, padding: '0 1rem' }}
+                >
+                  {lookingUpName ? <div className="spinner spinner-sm" /> : '🔍 Auto-Fill SMILES'}
+                </button>
+              </div>
+              {lookingUpName && <span className="form-hint" style={{ color: 'var(--color-primary-light)', display: 'flex', alignItems: 'center', gap: 6 }}><div className="spinner" style={{ width: 14, height: 14 }} /> Looking up SMILES for "{moleculeName}" in PubChem...</span>}
+              {autoFilledNotice && <span className="form-success" style={{ fontWeight: 700 }}>{autoFilledNotice}</span>}
+            </div>
+
             {/* SMILES */}
             <div className="form-group">
               <label className="form-label" htmlFor="smiles-input">
@@ -99,14 +171,14 @@ export default function HomePage() {
               <textarea
                 id="smiles-input"
                 className={`form-input form-textarea ${validation ? (validation.valid ? 'success' : 'error') : ''}`}
-                placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O  (Aspirin)"
+                placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O  (Auto-filled when you type a Molecule Name above)"
                 value={smiles}
-                onChange={e => setSmiles(e.target.value)}
+                onChange={e => { setSmiles(e.target.value); setAutoFilledNotice(''); }}
                 rows={3}
                 style={{ minHeight: 90 }}
                 required
               />
-              {validating && <span className="form-hint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div className="spinner" style={{ width: 14, height: 14 }} /> Validating...</span>}
+              {validating && <span className="form-hint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><div className="spinner" style={{ width: 14, height: 14 }} /> Validating SMILES structure...</span>}
               {!validating && validation && validation.valid && (
                 <span className="form-success">
                   ✓ Valid SMILES
@@ -117,16 +189,9 @@ export default function HomePage() {
               {!validating && validation && !validation.valid && (
                 <span className="form-error">✗ {validation.error}</span>
               )}
-              <span className="form-hint">SMILES (Simplified Molecular-Input Line-Entry System) notation</span>
+              <span className="form-hint">Auto-filled from Molecule Name above, or edit/paste SMILES manually</span>
             </div>
 
-            {/* Molecule name */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="name-input">
-                Molecule Name <span className="optional">(optional)</span>
-              </label>
-              <input id="name-input" className="form-input" placeholder="e.g. Aspirin, Compound-X" value={moleculeName} onChange={e => setMoleculeName(e.target.value)} />
-            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               {/* Target */}

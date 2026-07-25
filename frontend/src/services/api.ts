@@ -182,6 +182,10 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  nameToSmiles: (name: string) =>
+    request<{ name: string; title?: string; smiles: string | null; found: boolean }>(`/molecule/name-to-smiles?name=${encodeURIComponent(name)}`),
+
+
 
   // Patents
   getPatents: (analysisId: string, params?: Record<string, string>) => {
