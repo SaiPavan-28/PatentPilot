@@ -176,6 +176,13 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  explainQuery: (data: MoleculeSubmitRequest) =>
+    request<any>("/molecule/explain-query", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+
   // Patents
   getPatents: (analysisId: string, params?: Record<string, string>) => {
     const qs = params ? "?" + new URLSearchParams(params).toString() : "";

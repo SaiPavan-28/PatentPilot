@@ -152,3 +152,81 @@ def _fallback_explanation(patent: dict, target: Optional[str], indication: Optio
         "risk_level": "High Risk" if score >= 0.75 else "Medium Risk" if score >= 0.40 else "Low Risk",
         "key_concerns": [],
     }
+
+
+QUERY_EXPLAIN_SYSTEM_PROMPT = """You are an expert medicinal chemist and pharmacology consultant for PatentPilot.
+Your role is to explain the user's submitted drug discovery query (molecule SMILES/name, biological target, indication) in clear, professional detail while patent retrieval is running in the background.
+
+CRITICAL INSTRUCTIONS:
+1. Provide scientifically rigorous, educational, and engaging explanations.
+2. Explain the molecule's chemical nature/class, the biological target's mechanism of action, and the disease/pathology context.
+3. If specific fields (e.g., target or indication) are omitted, infer plausible pharmacodynamic roles or common therapeutic areas for the molecule type.
+4. Return ONLY a valid JSON object matching the requested schema. No markdown formatting outside the JSON values.
+"""
+
+async def generate_query_explanation(
+    smiles: str,
+    molecule_name: Optional[str] = None,
+    target: Optional[str] = None,
+    indication: Optional[str] = None,
+) -> dict:
+    """
+    Generate instant educational breakdown of submitted SMILES, Target, and Indication.
+    """
+    name_str = molecule_name.strip() if molecule_name else "Submitted Compound"
+    target_str = target.strip() if target else "Unspecified Biological Target"
+    indication_str = indication.strip() if indication else "General Therapeutic Area"
+
+    user_prompt = f"""Explain the following drug discovery query parameters in detail:
+- Molecule Name / Identifier: {name_str}
+- SMILES: {smiles}
+- Biological Target: {target_str}
+- Disease / Indication: {indication_str}
+
+Return a JSON object with EXACTLY these four fields:
+{{
+  "molecule_overview": "3-4 sentences detailing the chemical structure, molecular features, SMILES composition, and structural classification of this compound.",
+  "target_mechanism": "3-4 sentences explaining the biological function of '{target_str}', how its inhibition or activation modulates cell signaling, and its role in drug discovery.",
+  "disease_context": "3-4 sentences on the pathology of '{indication_str}', how modulating '{target_str}' contributes to disease treatment, and therapeutic significance.",
+  "fto_relevance": "2-3 sentences explaining why Freedom-to-Operate (FTO) IP clearance is crucial for compounds targeting '{target_str}' in '{indication_str}'."
+}}
+
+Return ONLY valid JSON."""
+
+    try:
+        raw_response = await call_llm(
+            system_prompt=QUERY_EXPLAIN_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            max_tokens=800,
+            temperature=0.3,
+        )
+
+        clean = raw_response.strip()
+        if clean.startswith("```"):
+            clean = clean.split("```")[1]
+            if clean.startswith("json"):
+                clean = clean[4:]
+        data = json.loads(clean.strip())
+        return data
+    except Exception as e:
+        logger.warning(f"Query explanation LLM generation fallback: {e}")
+        return _fallback_query_explanation(smiles, molecule_name, target, indication)
+
+
+def _fallback_query_explanation(
+    smiles: str,
+    molecule_name: Optional[str],
+    target: Optional[str],
+    indication: Optional[str],
+) -> dict:
+    name_str = molecule_name if molecule_name else "The submitted molecule"
+    target_str = target if target else "the designated molecular receptor/enzyme"
+    indication_str = indication if indication else "the target therapeutic condition"
+
+    return {
+        "molecule_overview": f"{name_str} (SMILES: {smiles}) is a small-molecule candidate evaluated for target binding affinity, metabolic stability, and drug-like properties. Its molecular structure provides specific spatial orientation for receptor interaction.",
+        "target_mechanism": f"The biological target '{target_str}' plays a key regulatory role in key cellular signaling pathways. Modulating this target via small-molecule binding alters downstream enzymatic cascades, influencing cell proliferation, immune response, or metabolic homeostasis.",
+        "disease_context": f"In the context of '{indication_str}', targeting {target_str} offers a targeted therapeutic strategy to modify disease progression, alleviate clinical symptoms, or halt dysfunctional physiological mechanisms.",
+        "fto_relevance": f"Navigating patent freedom-to-operate (FTO) for molecules targeting {target_str} in {indication_str} is vital due to dense competitor patent landscapes surrounding established and emerging target classes."
+    }
+

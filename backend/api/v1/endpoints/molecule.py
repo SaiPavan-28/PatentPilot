@@ -46,6 +46,23 @@ async def validate_molecule(request: MoleculeValidateRequest):
     )
 
 
+@router.post("/molecule/explain-query", tags=["Molecule"])
+async def explain_query(request: MoleculeSubmitRequest):
+    """
+    Generate instant AI educational insights on the submitted SMILES, Target, and Indication.
+    Used on the UI search loading screen while patent retrieval is running.
+    """
+    from backend.ai.explanation_agent import generate_query_explanation
+    insights = await generate_query_explanation(
+        smiles=request.smiles,
+        molecule_name=request.molecule_name,
+        target=request.target,
+        indication=request.indication,
+    )
+    return insights
+
+
+
 @router.post("/molecule/submit", response_model=AnalysisCreateResponse, tags=["Molecule"])
 async def submit_molecule(
     request: MoleculeSubmitRequest,
