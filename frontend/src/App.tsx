@@ -6,6 +6,7 @@ import WorkspacePage from './pages/WorkspacePage';
 import ReportPage from './pages/ReportPage';
 import HistoryPage from './pages/HistoryPage';
 import DashboardPage from './pages/DashboardPage';
+import PatentDetailPage from './pages/PatentDetailPage';
 
 function Navbar() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/workspace/:analysisId" element={<WorkspacePage />} />
+            <Route path="/workspace/:analysisId/patent/:patentId" element={<PatentDetailPage />} />
             <Route path="/report/:analysisId" element={<ReportPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />

@@ -26,12 +26,14 @@ function RiskBadge({ score }: { score: number }) {
 
 function PatentCard({
   patent,
+  analysisId,
   onStatusChange,
 }: {
   patent: Patent;
+  analysisId: string;
   onStatusChange: (patentId: string, status: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
   const [status, setStatus] = useState(patent.review_status || 'unreviewed');
   const [updating, setUpdating] = useState(false);
 
@@ -117,67 +119,14 @@ function PatentCard({
         <ScoreBar label="Semantic" value={patent.scores?.semantic_relevance || 0} color="#f59e0b" />
       </div>
 
-      {/* Evidence Flags */}
+      {/* Evidence Flags — compact preview only */}
       {patent.scores?.evidence_flags && patent.scores.evidence_flags.length > 0 && (
         <div className="evidence-list" style={{ marginBottom: '0.875rem' }}>
-          {patent.scores.evidence_flags.slice(0, expanded ? undefined : 3).map((flag, i) => (
+          {patent.scores.evidence_flags.slice(0, 2).map((flag, i) => (
             <div key={i} className="evidence-item">{flag}</div>
           ))}
-        </div>
-      )}
-
-      {/* Abstract is now strictly only available inside expanded view per user request */}
-
-      {/* Expanded Content */}
-      {expanded && (
-        <div style={{ marginBottom: '0.875rem' }}>
-          {/* Abstract — always shown in expanded view */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>Abstract</div>
-            {patent.abstract && patent.abstract.length > 5 ? (
-              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{patent.abstract}</p>
-            ) : (
-              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.6, fontStyle: 'italic' }}>
-                Abstract not available in database. &nbsp;
-                <a href={patent.patent_url || `https://patents.google.com/patent/${patent.patent_number}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
-                  View full patent on Google Patents →
-                </a>
-              </p>
-            )}
-          </div>
-
-
-          {/* AI Explanation */}
-          {patent.explanation && (
-            <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>🤖</span> AI Analysis
-              </div>
-              {[
-                { key: 'why_retrieved', label: 'Why Retrieved' },
-                { key: 'similar_regions', label: 'Similar Regions' },
-                { key: 'possible_novelty_overlap', label: 'Possible Novelty Overlap' },
-                { key: 'confidence', label: 'Confidence' },
-                { key: 'risk_level', label: 'Risk Level' },
-              ].map(({ key, label }) => (
-                patent.explanation![key as keyof typeof patent.explanation] && (
-                  <div key={key} style={{ marginBottom: '0.75rem' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>{label}</div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                      {patent.explanation![key as keyof typeof patent.explanation] as string}
-                    </p>
-                  </div>
-                )
-              ))}
-              {patent.explanation.key_concerns && patent.explanation.key_concerns.length > 0 && (
-                <div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Key Concerns</div>
-                  {patent.explanation.key_concerns.map((c, i) => (
-                    <div key={i} style={{ fontSize: '0.8rem', color: '#f87171', marginBottom: 4 }}>⚠ {c}</div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {patent.scores.evidence_flags.length > 2 && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>+{patent.scores.evidence_flags.length - 2} more — click View Details</div>
           )}
         </div>
       )}
@@ -196,11 +145,11 @@ function PatentCard({
             </button>
           ))}
           <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => setExpanded(!expanded)}
-            style={{ fontWeight: 600, border: '1px solid var(--color-border)', marginLeft: '0.5rem' }}
+            className="btn btn-primary btn-sm"
+            onClick={() => navigate(`/workspace/${analysisId}/patent/${patent.id}`)}
+            style={{ fontWeight: 700, marginLeft: '0.5rem' }}
           >
-            {expanded ? '▲ Collapse' : '▼ Expand'}
+            View Details →
           </button>
         </div>
       </div>
@@ -503,7 +452,7 @@ export default function WorkspacePage() {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem', alignItems: 'flex-start' }}>
                         {group.map(patent => (
-                          <PatentCard key={patent.id} patent={patent} onStatusChange={handleStatusChange} />
+                          <PatentCard key={patent.id} patent={patent} analysisId={analysisId!} onStatusChange={handleStatusChange} />
                         ))}
                       </div>
                     </div>
