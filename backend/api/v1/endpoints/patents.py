@@ -86,6 +86,10 @@ async def list_patents(
     response = {
         "analysis_id": analysis_id,
         "analysis_status": analysis.status,
+        "smiles": analysis.smiles,
+        "molecule_name": analysis.molecule_name,
+        "target": analysis.target,
+        "indication": analysis.indication,
         "patent_count": len(patents),
         "patents": [_patent_to_response(p) for p in patents]
     }

@@ -179,12 +179,26 @@ const PIPELINE_STEPS = [
   { icon: '🤖', label: 'AI Analysis', detail: 'Generating explanations for each patent' },
 ];
 
+function getInstantInsights(analysis: any) {
+  const name = analysis?.molecule_name || 'Submitted Compound';
+  const target = analysis?.target || 'Target Receptor/Enzyme';
+  const indication = analysis?.indication || 'Therapeutic Area';
+  const smiles = analysis?.smiles || 'Chemical Structure';
+
+  return {
+    molecule_overview: `${name} (${smiles.length > 35 ? smiles.substring(0, 35) + '…' : smiles}) is a small-molecule candidate evaluated for target binding affinity, metabolic stability, and pharmacokinetics. Its chemical scaffold provides precise spatial orientation for pocket binding.`,
+    target_mechanism: `The biological target '${target}' serves as a pivotal regulator in key cellular signaling pathways. Modulating ${target} via small-molecule binding alters downstream enzymatic cascades, controlling cellular proliferation, gene expression, or metabolic pathways.`,
+    disease_context: `For '${indication}', targeting ${target} offers a direct therapeutic strategy to halt pathological progression, modulate immune or physiological dysregulation, and improve clinical outcomes.`,
+    fto_relevance: `Performing Freedom-to-Operate (FTO) patent clearance for molecules targeting ${target} in ${indication} is critical to identify existing composition-of-matter patents, Markush structures, and method-of-use claims.`
+  };
+}
+
 function PatentFetchingAnimation({ analysis }: { analysis: any }) {
   const [activeStep, setActiveStep] = React.useState(0);
   const [dots, setDots] = React.useState('');
   const [insights, setInsights] = React.useState<any>(null);
   const [loadingInsights, setLoadingInsights] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<'molecule' | 'target' | 'disease' | 'fto'>('target');
+  const [activeTab, setActiveTab] = React.useState<'target' | 'molecule' | 'disease' | 'fto'>('target');
 
   React.useEffect(() => {
     const stepTimer = setInterval(() => {
@@ -198,17 +212,19 @@ function PatentFetchingAnimation({ analysis }: { analysis: any }) {
 
   // Fetch AI Query Insights while searching
   React.useEffect(() => {
-    if (analysis && analysis.smiles && !insights && !loadingInsights) {
+    if (analysis && (analysis.smiles || analysis.target || analysis.indication) && !insights && !loadingInsights) {
       setLoadingInsights(true);
       api.explainQuery({
-        smiles: analysis.smiles,
-        molecule_name: analysis.molecule_name,
-        target: analysis.target,
-        indication: analysis.indication,
+        smiles: analysis.smiles || '',
+        molecule_name: analysis.molecule_name || '',
+        target: analysis.target || '',
+        indication: analysis.indication || '',
       }).then(data => {
-        setInsights(data);
+        if (data && (data.target_mechanism || data.molecule_overview)) {
+          setInsights(data);
+        }
       }).catch(err => {
-        console.error("Failed to load query insights", err);
+        console.error("Query insights error", err);
       }).finally(() => {
         setLoadingInsights(false);
       });
@@ -216,6 +232,7 @@ function PatentFetchingAnimation({ analysis }: { analysis: any }) {
   }, [analysis, insights, loadingInsights]);
 
   const step = PIPELINE_STEPS[activeStep];
+  const activeInsights = insights || getInstantInsights(analysis);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -270,45 +287,46 @@ function PatentFetchingAnimation({ analysis }: { analysis: any }) {
         )}
       </div>
 
-      {/* AI Educational Insights Card (Displayed while searching) */}
+      {/* AI Educational Insights Card (Displayed INSTANTLY while searching) */}
       <div className="card card-padding" style={{ background: 'var(--color-bg-card)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 'var(--radius-lg)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '1.2rem' }}>💡</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.4rem' }}>🧠</span>
             <div>
-              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-                Drug Discovery & Query Insights
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
+                Drug Discovery & Target Pharmacology Guide
               </h4>
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                Exploring your submitted parameters while patent databases are searched
+              <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                Explore your query parameters & biological mechanism while patent search runs
               </span>
             </div>
           </div>
           {loadingInsights && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--color-primary-light)' }}>
-              <div className="spinner spinner-sm" /> Analyzing parameters...
+              <div className="spinner spinner-sm" /> Deepening analysis...
             </div>
           )}
         </div>
 
         {/* Insight Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           {[
-            { id: 'target', label: '🎯 Biological Target', color: '#06b6d4' },
-            { id: 'molecule', label: '🧪 Compound Structure', color: '#6366f1' },
-            { id: 'disease', label: '🏥 Disease & Indication', color: '#10b981' },
-            { id: 'fto', label: '⚖️ FTO Context', color: '#f59e0b' },
+            { id: 'target', label: `🎯 Target: ${analysis?.target || 'Mechanism'}`, color: '#06b6d4' },
+            { id: 'molecule', label: `🧪 Molecule Structure`, color: '#6366f1' },
+            { id: 'disease', label: `🏥 Disease: ${analysis?.indication || 'Pathology'}`, color: '#10b981' },
+            { id: 'fto', label: `⚖️ FTO IP Strategy`, color: '#f59e0b' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className="btn btn-sm"
               style={{
-                background: activeTab === tab.id ? `rgba(${tab.color === '#6366f1' ? '99,102,241' : tab.color === '#06b6d4' ? '6,182,212' : tab.color === '#10b981' ? '16,185,129' : '245,158,11'}, 0.15)` : 'var(--color-bg-alt)',
+                background: activeTab === tab.id ? `rgba(${tab.color === '#6366f1' ? '99,102,241' : tab.color === '#06b6d4' ? '6,182,212' : tab.color === '#10b981' ? '16,185,129' : '245,158,11'}, 0.18)` : 'var(--color-bg-alt)',
                 border: activeTab === tab.id ? `1px solid ${tab.color}` : '1px solid var(--color-border)',
                 color: activeTab === tab.id ? tab.color : 'var(--color-text-secondary)',
                 fontWeight: activeTab === tab.id ? 700 : 500,
-                borderRadius: 'var(--radius-md)'
+                borderRadius: 'var(--radius-md)',
+                padding: '0.4rem 0.85rem'
               }}
             >
               {tab.label}
@@ -318,57 +336,49 @@ function PatentFetchingAnimation({ analysis }: { analysis: any }) {
 
         {/* Content Box */}
         <div style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)', minHeight: 120 }}>
-          {insights ? (
+          {activeTab === 'target' && (
             <div>
-              {activeTab === 'molecule' && (
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                    Chemical Structure & Features
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                    {insights.molecule_overview}
-                  </p>
-                </div>
-              )}
-              {activeTab === 'target' && (
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#06b6d4', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                    Target Mechanism of Action ({analysis?.target || 'Specified Target'})
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                    {insights.target_mechanism}
-                  </p>
-                </div>
-              )}
-              {activeTab === 'disease' && (
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                    Therapeutic & Disease Context ({analysis?.indication || 'Indication'})
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                    {insights.disease_context}
-                  </p>
-                </div>
-              )}
-              {activeTab === 'fto' && (
-                <div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                    Freedom-To-Operate (FTO) IP Relevance
-                  </div>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                    {insights.fto_relevance}
-                  </p>
-                </div>
-              )}
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#06b6d4', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.06em' }}>
+                Biological Function & Mechanism of Action ({analysis?.target || 'Target Receptor/Enzyme'})
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                {activeInsights.target_mechanism}
+              </p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 100, gap: 8, color: 'var(--color-text-muted)' }}>
-              <div className="spinner spinner-md" />
-              <span style={{ fontSize: '0.8rem' }}>Synthesizing molecular pharmacology insights...</span>
+          )}
+          {activeTab === 'molecule' && (
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.06em' }}>
+                Chemical Structure & Medicinal Chemistry Profile
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                {activeInsights.molecule_overview}
+              </p>
+            </div>
+          )}
+          {activeTab === 'disease' && (
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.06em' }}>
+                Disease Pathology & Clinical Rationale ({analysis?.indication || 'Indication'})
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                {activeInsights.disease_context}
+              </p>
+            </div>
+          )}
+          {activeTab === 'fto' && (
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.06em' }}>
+                Freedom-To-Operate (FTO) & IP Clearance Considerations
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                {activeInsights.fto_relevance}
+              </p>
             </div>
           )}
         </div>
       </div>
+
 
       {/* Skeleton cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1rem' }}>
