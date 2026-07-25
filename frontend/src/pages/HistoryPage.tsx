@@ -17,6 +17,8 @@ export default function HistoryPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -31,7 +33,23 @@ export default function HistoryPage() {
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this analysis and all its patents?')) return;
+    setDeleting(id);
+    try {
+      await api.deleteAnalysis(id);
+      setAnalyses(prev => prev.filter(a => a.id !== id));
+      setTotal(t => t - 1);
+    } catch (err: any) {
+      alert('Delete failed: ' + err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   useEffect(() => { fetchHistory(); }, [page, search]);
+
 
   const totalPages = Math.ceil(total / 10);
 
@@ -131,17 +149,33 @@ export default function HistoryPage() {
                   <RiskPill risk={a.risk_level} />
                 </div>
 
-                {/* Date + Arrow */}
-                <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 80 }}>
+                {/* Date + Delete + Arrow */}
+                <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     {a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     {a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                   </div>
-                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>→</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={(e) => handleDelete(e, a.id)}
+                      disabled={deleting === a.id}
+                      title="Delete this analysis"
+                      style={{
+                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                        color: '#ef4444', borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem',
+                        cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s',
+                        opacity: deleting === a.id ? 0.5 : 1
+                      }}
+                    >
+                      {deleting === a.id ? '…' : '🗑 Delete'}
+                    </button>
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>→</span>
+                  </div>
                 </div>
               </div>
+
             ))}
           </div>
 

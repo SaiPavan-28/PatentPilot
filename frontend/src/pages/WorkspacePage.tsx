@@ -52,6 +52,7 @@ function PatentCard({
   let scoreColor = 'var(--color-risk-low)';
   if (overallScore >= 0.75) scoreColor = 'var(--color-risk-high)';
   else if (overallScore >= 0.4) scoreColor = 'var(--color-risk-review)';
+  else if (overallScore < 0.20) scoreColor = '#ef4444'; // Red for < 20%
 
   return (
     <div className={`patent-card ${status !== 'unreviewed' ? status : ''}`}>
@@ -62,7 +63,7 @@ function PatentCard({
             <strong>Patent Number:</strong> <a href={patent.patent_url || `https://patents.google.com/patent/${patent.patent_number}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary-dark)' }}>{patent.patent_number}</a>
           </div>
           <div style={{ fontSize: '0.85rem' }}>
-            <strong>Title:</strong> <span style={{ color: 'var(--color-text-primary)' }}>{patent.title || 'N/A'}</span>
+            <strong>Title:</strong> <span style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{patent.title || 'N/A'}</span>
           </div>
           <div style={{ fontSize: '0.85rem' }}>
             <strong>Assignee:</strong> <span style={{ color: 'var(--color-text-secondary)' }}>{patent.assignee || 'N/A'}</span>
@@ -211,6 +212,92 @@ function SkeletonPatentCard() {
   );
 }
 
+// ── Creative animated patent fetching loader ──────────────────────────────────
+const PIPELINE_STEPS = [
+  { icon: '🧬', label: 'Parsing SMILES', detail: 'Generating molecular fingerprint' },
+  { icon: '🔍', label: 'PubChem Similarity', detail: 'Searching structurally related compounds' },
+  { icon: '📡', label: 'Retrieving Patents', detail: 'Scanning patent databases globally' },
+  { icon: '📊', label: 'Ranking Results', detail: 'Scoring by chemical & semantic overlap' },
+  { icon: '🤖', label: 'AI Analysis', detail: 'Generating explanations for each patent' },
+];
+
+function PatentFetchingAnimation({ analysis }: { analysis: any }) {
+  const [activeStep, setActiveStep] = React.useState(0);
+  const [dots, setDots] = React.useState('');
+
+  React.useEffect(() => {
+    const stepTimer = setInterval(() => {
+      setActiveStep(s => (s + 1) % PIPELINE_STEPS.length);
+    }, 3500);
+    const dotTimer = setInterval(() => {
+      setDots(d => d.length >= 3 ? '' : d + '.');
+    }, 500);
+    return () => { clearInterval(stepTimer); clearInterval(dotTimer); };
+  }, []);
+
+  const step = PIPELINE_STEPS[activeStep];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Main animated card */}
+      <div className="card card-padding" style={{ padding: '2.5rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(16,185,129,0.04) 100%)', borderColor: 'rgba(99,102,241,0.25)', textAlign: 'center' }}>
+        {/* Animated orb */}
+        <div style={{ position: 'relative', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', width: 96, height: 96, margin: '0 auto 1.5rem' }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', animation: 'spin 3s linear infinite' }} />
+          <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '3px solid rgba(16,185,129,0.3)', animation: 'spin 2s linear infinite reverse' }} />
+          <span style={{ fontSize: '2.5rem' }}>{step.icon}</span>
+        </div>
+
+        <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--color-text-primary)' }}>
+          {step.label}{dots}
+        </h3>
+        <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
+          {step.detail}
+        </p>
+
+        {/* Pipeline step dots */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem' }}>
+          {PIPELINE_STEPS.map((s, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{
+                width: i === activeStep ? 32 : 10, height: 10, borderRadius: 999,
+                background: i < activeStep ? 'var(--color-risk-low)' : i === activeStep ? 'var(--color-primary)' : 'rgba(255,255,255,0.1)',
+                transition: 'all 0.4s ease'
+              }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Molecule info pills */}
+        {analysis && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.5rem' }}>
+            {analysis.smiles && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', background: 'rgba(99,102,241,0.12)', color: 'var(--color-primary-light)', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(99,102,241,0.2)' }}>
+                ⚗️ {analysis.smiles.length > 40 ? analysis.smiles.substring(0, 40) + '…' : analysis.smiles}
+              </span>
+            )}
+            {analysis.target && (
+              <span style={{ fontSize: '0.72rem', background: 'rgba(6,182,212,0.12)', color: '#06b6d4', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(6,182,212,0.2)' }}>
+                🎯 {analysis.target}
+              </span>
+            )}
+            {analysis.indication && (
+              <span style={{ fontSize: '0.72rem', background: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '4px 12px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.2)' }}>
+                🏥 {analysis.indication}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Skeleton cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1rem' }}>
+        {[...Array(4)].map((_, i) => <SkeletonPatentCard key={i} />)}
+      </div>
+    </div>
+  );
+}
+
 export default function WorkspacePage() {
   const { analysisId } = useParams<{ analysisId: string }>();
   const navigate = useNavigate();
@@ -316,26 +403,8 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      {/* Processing skeleton */}
-      {isProcessing && (
-        <div>
-          <div className="card card-padding" style={{ marginBottom: '1rem', textAlign: 'center', padding: '2rem' }}>
-            <div className="spinner spinner-lg" style={{ margin: '0 auto 1rem' }} />
-            <h3 style={{ marginBottom: '0.5rem' }}>Analyzing Patents...</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-              Running parallel retrieval from PubChem & PatentsView, ranking by hybrid similarity, and generating AI explanations. This takes 30–90 seconds.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-              {['🔬 Fingerprinting', '⚡ Retrieving', '📊 Ranking', '🤖 Explaining'].map((step, i) => (
-                <div key={i} style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{step}</div>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1rem' }}>
-            {[...Array(4)].map((_, i) => <SkeletonPatentCard key={i} />)}
-          </div>
-        </div>
-      )}
+      {/* Processing — Creative animated loader */}
+      {isProcessing && <PatentFetchingAnimation analysis={analysis} />}
 
       {/* Error */}
       {error && (

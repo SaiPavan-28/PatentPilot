@@ -2,6 +2,7 @@
 History and Dashboard endpoints.
 """
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Optional
@@ -112,6 +113,23 @@ async def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
         created_at=analysis.created_at,
         updated_at=analysis.updated_at,
     )
+
+
+@router.delete("/history/{analysis_id}", tags=["History"])
+async def delete_analysis(analysis_id: str, db: Session = Depends(get_db)):
+    """Delete an analysis and all its associated patents and report."""
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    if not analysis:
+        raise AnalysisNotFoundError(analysis_id)
+
+    # Cascade delete: patents → report → analysis
+    db.query(PatentResult).filter(PatentResult.analysis_id == analysis_id).delete()
+    db.query(Report).filter(Report.analysis_id == analysis_id).delete()
+    db.delete(analysis)
+    db.commit()
+
+    logger.info(f"Deleted analysis {analysis_id} and all associated records.")
+    return JSONResponse(content={"deleted": analysis_id})
 
 
 @router.get("/dashboard", response_model=DashboardStats, tags=["Dashboard"])

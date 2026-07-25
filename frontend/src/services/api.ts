@@ -211,6 +211,10 @@ export const api = {
   getAnalysis: (id: string) =>
     request<AnalysisDetail>(`/history/${id}`),
 
+  deleteAnalysis: (id: string) =>
+    request<any>(`/history/${id}`, { method: "DELETE" }),
+
+
   // Dashboard
   getDashboard: () => request<DashboardStats>("/dashboard"),
 
