@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\sadvi\Downloads\centellaai\patentpilot\backend\api\v1\endpoints\report.py", line 67, in generate_patentability_report
+    report_data = await generate_report(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sadvi\Downloads\centellaai\patentpilot\backend\ai\report_agent.py", line 146, in generate_report
+    "confidence_score": round(sum(confidences) / len(confidences), 4) if confidences else 0.5,
+                                                                         ^^^^^^^^^^^
+NameError: name 'confidences' is not defined
