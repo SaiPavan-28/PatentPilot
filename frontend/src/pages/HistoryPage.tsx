@@ -101,82 +101,121 @@ export default function HistoryPage() {
         </div>
       ) : (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {analyses.map(a => (
-              <div
-                key={a.id}
-                className="card card-padding"
-                style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', transition: 'all var(--transition-fast)' }}
-                onClick={() => a.status === 'complete' ? navigate(a.risk_level ? `/report/${a.id}` : `/workspace/${a.id}`) : navigate(`/workspace/${a.id}`)}
-              >
-                {/* Status */}
-                <div style={{ textAlign: 'center', minWidth: 60 }}>
-                  <div className={`status-dot ${a.status}`} style={{ margin: '0 auto 4px' }} />
-                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>{a.status}</span>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {analyses.map(a => {
+              const overallRisk = a.risk_score !== null && a.risk_score !== undefined ? Math.round(a.risk_score * 100) : null;
+              const riskColor = overallRisk !== null ? (overallRisk >= 75 ? 'var(--color-risk-high)' : overallRisk >= 40 ? 'var(--color-risk-review)' : 'var(--color-risk-low)') : 'var(--color-text-muted)';
+              const formattedDate = a.created_at ? new Date(a.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+              const formattedTime = a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-                {/* Main info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-primary-light)' }}>
-                      {a.id.substring(0, 8)}...
-                    </span>
-                    {a.molecule_name && <span style={{ fontWeight: 700, color: 'var(--color-text-primary)', fontSize: '0.9rem' }}>{a.molecule_name}</span>}
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300 }}>
-                    {a.smiles}
-                  </div>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: 4, flexWrap: 'wrap' }}>
-                    {a.target && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>🎯 {a.target}</span>}
-                    {a.indication && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>🏥 {a.indication}</span>}
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-primary-light)' }}>{a.patent_count}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>patents</div>
-                  </div>
-                  {a.risk_score !== null && a.risk_score !== undefined && (
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: a.risk_score >= 0.75 ? 'var(--color-risk-high)' : a.risk_score >= 0.4 ? 'var(--color-risk-review)' : 'var(--color-risk-low)' }}>
-                        {Math.round(a.risk_score * 100)}%
-                      </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>risk</div>
+              return (
+                <div
+                  key={a.id}
+                  className="card card-padding"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    background: 'var(--color-bg-card)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-lg)',
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                >
+                  {/* Card Header: Molecule Name + ID + Date */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+                        🧪 {a.molecule_name || 'Unnamed Compound'}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-primary-light)', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                        ID: {a.id.substring(0, 8)}
+                      </span>
+                      <div className={`status-dot ${a.status}`} style={{ margin: '0 4px' }} title={`Status: ${a.status}`} />
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>{a.status}</span>
                     </div>
-                  )}
-                  <RiskPill risk={a.risk_level} />
-                </div>
 
-                {/* Date + Delete + Arrow */}
-                <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 80, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    {a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}
+                    {/* Date */}
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>📅</span> {formattedDate} {formattedTime && `· ${formattedTime}`}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    {a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+
+                  {/* Body: SMILES, Target, Disease */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {/* SMILES */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)', minWidth: 60 }}>SMILES:</span>
+                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', background: 'rgba(0,0,0,0.2)', padding: '4px 8px', borderRadius: '4px', color: 'var(--color-text-primary)', wordBreak: 'break-all', flex: 1, border: '1px solid rgba(255,255,255,0.05)' }}>
+                        {a.smiles}
+                      </code>
+                    </div>
+
+                    {/* Target & Disease Pills */}
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '2px' }}>
+                      <span style={{ fontSize: '0.78rem', background: 'rgba(6,182,212,0.1)', color: '#06b6d4', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(6,182,212,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        🎯 Target: <strong>{a.target || 'N/A'}</strong>
+                      </span>
+                      <span style={{ fontSize: '0.78rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        🏥 Disease: <strong>{a.indication || 'N/A'}</strong>
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <button
-                      onClick={(e) => handleDelete(e, a.id)}
-                      disabled={deleting === a.id}
-                      title="Delete this analysis"
-                      style={{
-                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-                        color: '#ef4444', borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem',
-                        cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s',
-                        opacity: deleting === a.id ? 0.5 : 1
-                      }}
-                    >
-                      {deleting === a.id ? '…' : '🗑 Delete'}
-                    </button>
-                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>→</span>
+
+                  {/* Footer: Metrics (Total Patents, Risk %) + Actions (Report, Delete) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    {/* Metrics */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                      {/* Total Patents */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-primary-light)' }}>{a.patent_count}</span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Total Patents</span>
+                      </div>
+
+                      {/* Risk % */}
+                      {overallRisk !== null && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '1rem', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color: riskColor }}>
+                            {overallRisk}%
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Risk</span>
+                          <RiskPill risk={a.risk_level} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions: Report Button & Delete Option */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => navigate(a.risk_level ? `/report/${a.id}` : `/workspace/${a.id}`)}
+                        style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        📋 View Report →
+                      </button>
+
+                      <button
+                        onClick={(e) => handleDelete(e, a.id)}
+                        disabled={deleting === a.id}
+                        title="Delete this analysis"
+                        className="btn btn-sm"
+                        style={{
+                          background: 'rgba(239,68,68,0.12)',
+                          border: '1px solid rgba(239,68,68,0.3)',
+                          color: '#ef4444',
+                          fontWeight: 700,
+                          opacity: deleting === a.id ? 0.5 : 1,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {deleting === a.id ? '…' : '🗑 Delete'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}
