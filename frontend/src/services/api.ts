@@ -68,9 +68,11 @@ export interface Patent {
   epo_url?: string;
   google_patents_url?: string;
   verification_status?: {
-    surechembl: boolean;
-    patentsview: boolean;
-    google_patents: boolean;
+    surechembl?: boolean;
+    patentsview?: boolean;
+    pubchem?: boolean;
+    europe_pmc?: boolean;
+    google_patents?: boolean;
   };
   scores: ScoreBreakdown;
   explanation?: PatentExplanation;

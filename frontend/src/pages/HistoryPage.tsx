@@ -211,6 +211,7 @@ export default function HistoryPage() {
                       >
                         {deleting === a.id ? '…' : '🗑 Delete'}
                       </button>
+                    </div>
                   </div>
                 </div>
               );

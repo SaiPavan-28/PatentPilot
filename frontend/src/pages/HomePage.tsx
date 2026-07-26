@@ -63,7 +63,7 @@ export default function HomePage() {
     setLookingUpName(true);
     setAutoFilledNotice('');
     try {
-      const res = await api.nameToSmiles(moleculeName.strip ? moleculeName.trim() : moleculeName);
+      const res = await api.nameToSmiles(moleculeName.trim());
       if (res.found && res.smiles) {
         setSmiles(res.smiles);
         setAutoFilledNotice(`✨ Found & filled SMILES for "${moleculeName}"`);
