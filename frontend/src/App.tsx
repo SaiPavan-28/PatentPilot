@@ -7,6 +7,7 @@ import ReportPage from './pages/ReportPage';
 import HistoryPage from './pages/HistoryPage';
 import DashboardPage from './pages/DashboardPage';
 import PatentDetailPage from './pages/PatentDetailPage';
+import AboutPage from './pages/AboutPage';
 
 function Navbar() {
   return (
@@ -46,6 +47,12 @@ function Navbar() {
               Dashboard
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/about" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              About
+            </NavLink>
+          </li>
         </ul>
       </div>
     </nav>
@@ -65,6 +72,7 @@ export default function App() {
             <Route path="/report/:analysisId" element={<ReportPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/about" element={<AboutPage />} />
           </Routes>
         </main>
       </div>
