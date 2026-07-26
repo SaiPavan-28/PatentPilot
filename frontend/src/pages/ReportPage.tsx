@@ -137,42 +137,57 @@ export default function ReportPage() {
         rationale={report.recommendation_rationale}
       />
 
-      {/* Scoring Methodology */}
-      {report.scoring_methodology_explanation && (
-        <div style={{ padding: '0.875rem 1rem', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
-          <span style={{ color: 'var(--color-primary-light)', fontWeight: 700 }}>📊 Scoring: </span>
-          {report.scoring_methodology_explanation}
+      {/* Documented Scoring Methodology & Recommendation Decision Path */}
+      <div style={{ padding: '1.25rem', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 'var(--radius-lg)', marginBottom: '1.75rem' }}>
+        <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-primary-light)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>📊</span> Scoring Methodology & Recommendation Decision Path
         </div>
-      )}
+        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '0.75rem' }}>
+          PatentPilot evaluates patent relevance using a multi-dimensional hybrid overlap scoring algorithm:
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '0.72rem', color: 'var(--color-primary-light)', fontWeight: 700 }}>🧪 Chemical Structure (40%)</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>Tanimoto Morgan/PubChem Similarity</div>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '0.72rem', color: '#06b6d4', fontWeight: 700 }}>🎯 Target Match (25%)</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>Biological target keyword alignment</div>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '0.72rem', color: '#a855f7', fontWeight: 700 }}>📝 Semantic Overlap (20%)</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>TF-IDF Abstract & Claims similarity</div>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>🏥 Disease Indication (10%)</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: 2 }}>Pathology and indication alignment</div>
+          </div>
+        </div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <span>🟢 <strong>Low Patent Risk</strong> (&lt; 40%)</span>
+          <span>🟡 <strong>Requires Expert Review</strong> (40% – 74%)</span>
+          <span>🔴 <strong>High Patent Risk</strong> (≥ 75%)</span>
+        </div>
+      </div>
 
-      {/* Executive Summary */}
-      <ReportSection title="Executive Summary" icon="📝">
+      {/* 1. Executive Summary */}
+      <ReportSection title="1. Executive Summary" icon="📝">
         <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.8, marginTop: '1rem', whiteSpace: 'pre-wrap' }}>
           {report.executive_summary}
         </p>
       </ReportSection>
 
-      {/* Key Evidence */}
-      {report.key_evidence && report.key_evidence.length > 0 && (
-        <ReportSection title="Key Evidence" icon="🔍">
-          <ul style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyle: 'none' }}>
-            {report.key_evidence.map((e, i) => (
-              <li key={i} style={{ display: 'flex', gap: 10, padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                <span style={{ color: 'var(--color-primary-light)', fontWeight: 700, minWidth: 20 }}>{i + 1}.</span>
-                {e}
-              </li>
-            ))}
-          </ul>
-        </ReportSection>
-      )}
-
-      {/* Key Similar Patents */}
+      {/* 2. Key Similar Patents */}
       {report.key_similar_patents && report.key_similar_patents.length > 0 && (
-        <ReportSection title="Key Similar Patents" icon="📑">
+        <ReportSection title="2. Key Similar Patents" icon="📑">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
             {report.key_similar_patents.map((p: any, i) => {
-              const score = p.overall_score || 0;
+              const score = typeof p === 'object' ? (p.overall_score || 0) : 0;
               const scoreColor = score >= 0.75 ? 'var(--color-risk-high)' : score >= 0.4 ? 'var(--color-risk-review)' : 'var(--color-risk-low)';
+              const pNum = typeof p === 'object' ? p.patent_number : String(p);
+              const title = typeof p === 'object' ? p.title : 'Patent Document';
+              const concern = typeof p === 'object' ? p.key_concern : null;
+
               return (
                 <div key={i} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', alignItems: 'flex-start' }}>
                   <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 70 }}>
@@ -180,9 +195,9 @@ export default function ReportPage() {
                     <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>overlap</div>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{p.patent_number}</div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: '0.25rem' }}>{p.title}</div>
-                    {p.key_concern && <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{p.key_concern}</p>}
+                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{pNum}</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: '0.25rem' }}>{title}</div>
+                    {concern && <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{concern}</p>}
                   </div>
                 </div>
               );
@@ -191,9 +206,9 @@ export default function ReportPage() {
         </ReportSection>
       )}
 
-      {/* Novelty Concerns */}
+      {/* 3. Potential Novelty Concerns */}
       {report.novelty_concerns && report.novelty_concerns.length > 0 && (
-        <ReportSection title="Potential Novelty Concerns" icon="⚠">
+        <ReportSection title="3. Potential Novelty Concerns" icon="⚠">
           <ul style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyle: 'none' }}>
             {report.novelty_concerns.map((c, i) => (
               <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
@@ -205,12 +220,50 @@ export default function ReportPage() {
         </ReportSection>
       )}
 
-      {/* Potential Novel Regions */}
-      {report.potential_novel_regions && (
-        <ReportSection title="Potential Novel Molecule Regions" icon="✨">
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.7, marginTop: '1rem' }}>
-            {report.potential_novel_regions}
-          </p>
+      {/* 4. Patents Requiring Manual Review */}
+      {report.patents_requiring_review && report.patents_requiring_review.length > 0 && (
+        <ReportSection title="4. Patents Requiring Manual Review" icon="🔎">
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {report.patents_requiring_review.map((item: any, i) => {
+              const pNum = typeof item === 'object' ? item.patent_number : String(item);
+              const title = typeof item === 'object' ? item.title : 'Patent Flagged for Inspection';
+              const score = typeof item === 'object' ? item.overall_score : null;
+              const reason = typeof item === 'object' ? item.reason : 'Requires manual claim scope and legal status review.';
+
+              return (
+                <div key={i} style={{ padding: '0.875rem 1rem', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 800 }}>
+                      📌 {pNum}
+                    </span>
+                    {score !== null && score !== undefined && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.15)', padding: '2px 8px', borderRadius: 999 }}>
+                        {Math.round(score * 100)}% Overlap
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4 }}>{title}</div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: 0 }}>
+                    <strong>Review Reason:</strong> {reason}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </ReportSection>
+      )}
+
+      {/* Key Evidence */}
+      {report.key_evidence && report.key_evidence.length > 0 && (
+        <ReportSection title="Key Evidence & Findings" icon="🔍">
+          <ul style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', listStyle: 'none' }}>
+            {report.key_evidence.map((e, i) => (
+              <li key={i} style={{ display: 'flex', gap: 10, padding: '0.6rem 0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                <span style={{ color: 'var(--color-primary-light)', fontWeight: 700, minWidth: 20 }}>{i + 1}.</span>
+                {e}
+              </li>
+            ))}
+          </ul>
         </ReportSection>
       )}
 

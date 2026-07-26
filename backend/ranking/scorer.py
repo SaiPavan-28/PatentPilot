@@ -199,21 +199,21 @@ def determine_risk_level(patents: list) -> tuple:
     avg_score = sum(scores) / len(scores) if scores else 0.0
 
     if max_score >= 0.75:
-        risk = "High Risk"
+        risk = "High Patent Risk"
         rationale = (
             f"At least one patent has an overlap score ≥0.75 (max={max_score:.2f}), "
             "indicating substantial structural/functional similarity. "
             "Immediate expert review is strongly recommended."
         )
     elif max_score >= 0.40:
-        risk = "Medium Risk"
+        risk = "Requires Expert Review"
         rationale = (
             f"Patents with overlap scores between 0.40–0.75 (max={max_score:.2f}, avg={avg_score:.2f}) "
             "indicate moderate similarity that warrants professional patent attorney review "
             "before proceeding with development."
         )
     else:
-        risk = "Low Risk"
+        risk = "Low Patent Risk"
         rationale = (
             f"All retrieved patents have overlap scores <0.40 (max={max_score:.2f}), "
             "suggesting low structural and functional overlap. "

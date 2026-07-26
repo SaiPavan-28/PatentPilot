@@ -105,8 +105,15 @@ Generate a JSON object with EXACTLY these fields:
     }}
   ],
   "Potential Novelty Concerns": ["list of 3-5 specific novelty concerns, each citing a patent number or score"],
-  "Patents needing manual review": ["list of patent numbers needing manual review"],
-  "Overall Recommendation": "Strictly one of: Low Risk, Medium Risk, High Risk"
+  "Patents Requiring Manual Review": [
+    {{
+      "patent_number": "...",
+      "title": "...",
+      "overall_score": 0.0,
+      "reason": "specific rationale why manual claim inspection is required for this patent"
+    }}
+  ],
+  "Overall Recommendation": "Strictly one of: Low Patent Risk, Requires Expert Review, High Patent Risk"
 }}
 
 Return ONLY the JSON object. No markdown, no preamble."""
@@ -138,10 +145,10 @@ Return ONLY the JSON object. No markdown, no preamble."""
     
     # Map JSON to report_data dictionary keys used by database model
     mapped_data = {
-        "executive_summary": report_data.get("Executive Summary", ""),
-        "key_similar_patents": report_data.get("Key Similar Patents", []),
-        "novelty_concerns": report_data.get("Potential Novelty Concerns", []),
-        "patents_requiring_review": report_data.get("Patents needing manual review", []),
+        "executive_summary": report_data.get("Executive Summary") or report_data.get("executive_summary", ""),
+        "key_similar_patents": report_data.get("Key Similar Patents") or report_data.get("key_similar_patents", []),
+        "novelty_concerns": report_data.get("Potential Novelty Concerns") or report_data.get("novelty_concerns", []),
+        "patents_requiring_review": report_data.get("Patents Requiring Manual Review") or report_data.get("Patents needing manual review") or report_data.get("patents_requiring_review", []),
         "recommendation": report_data.get("Overall Recommendation", risk_label),
         "risk_score": round(risk_score, 4),
         "recommendation_rationale": risk_rationale,
@@ -194,7 +201,15 @@ def _fallback_report(patents: List[dict], target: Optional[str], indication: Opt
             f"Patent {p.get('patent_number')} has overlap score {p.get('overall_score', 0):.2f}"
             for p in top_patents
         ],
-        "potential_novel_regions": "Detailed novelty region analysis requires manual review of full patent claims.",
+        "patents_requiring_review": [
+            {
+                "patent_number": p.get("patent_number"),
+                "title": p.get("title", "N/A"),
+                "overall_score": p.get("overall_score", 0),
+                "reason": f"High similarity score ({p.get('overall_score', 0):.2f}) exceeds screening threshold — requires expert claim scope inspection."
+            }
+            for p in top_patents if p.get("overall_score", 0) >= 0.40
+        ],
         "recommended_next_actions": [
             "Consult a registered patent attorney for full FTO opinion",
             "Review full claim text for each flagged patent",
