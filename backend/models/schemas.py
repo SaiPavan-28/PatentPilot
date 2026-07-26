@@ -137,6 +137,7 @@ class AnalysisSummary(BaseModel):
     indication: Optional[str] = None
     status: str
     patent_count: int = 0
+    has_report: bool = False
     risk_level: Optional[str] = None
     risk_score: Optional[float] = None
     created_at: Optional[datetime] = None

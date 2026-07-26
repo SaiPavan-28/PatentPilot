@@ -114,6 +114,7 @@ export interface AnalysisSummary {
   indication?: string;
   status: string;
   patent_count: number;
+  has_report?: boolean;
   risk_level?: string;
   risk_score?: number;
   created_at?: string;

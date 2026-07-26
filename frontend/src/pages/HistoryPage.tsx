@@ -107,6 +107,7 @@ export default function HistoryPage() {
               const riskColor = overallRisk !== null ? (overallRisk >= 75 ? 'var(--color-risk-high)' : overallRisk >= 40 ? 'var(--color-risk-review)' : 'var(--color-risk-low)') : 'var(--color-text-muted)';
               const formattedDate = a.created_at ? new Date(a.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
               const formattedTime = a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+              const isReportGenerated = Boolean(a.has_report || a.risk_level);
 
               return (
                 <div
@@ -142,28 +143,27 @@ export default function HistoryPage() {
                     </div>
                   </div>
 
-                  {/* Body: SMILES, Target, Disease */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    {/* SMILES */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)', minWidth: 60 }}>SMILES:</span>
-                      <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', background: 'rgba(0,0,0,0.2)', padding: '4px 8px', borderRadius: '4px', color: 'var(--color-text-primary)', wordBreak: 'break-all', flex: 1, border: '1px solid rgba(255,255,255,0.05)' }}>
-                        {a.smiles}
-                      </code>
-                    </div>
+                  {/* Body: SMILES + Target + Disease in ONE horizontal row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.82rem' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)', flexShrink: 0 }}>SMILES:</span>
+                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', background: 'rgba(0,0,0,0.2)', padding: '4px 8px', borderRadius: '4px', color: 'var(--color-text-primary)', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '360px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {a.smiles}
+                    </code>
 
-                    {/* Target & Disease Pills */}
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '2px' }}>
+                    {/* Beside SMILES: Target & Disease Pills */}
+                    {a.target && (
                       <span style={{ fontSize: '0.78rem', background: 'rgba(6,182,212,0.1)', color: '#06b6d4', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(6,182,212,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        🎯 Target: <strong>{a.target || 'N/A'}</strong>
+                        🎯 Target: <strong>{a.target}</strong>
                       </span>
+                    )}
+                    {a.indication && (
                       <span style={{ fontSize: '0.78rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.2)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        🏥 Disease: <strong>{a.indication || 'N/A'}</strong>
+                        🏥 Disease: <strong>{a.indication}</strong>
                       </span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Footer: Metrics (Total Patents, Risk %) + Actions (Report, Delete) */}
+                  {/* Footer: Metrics (Total Patents, Risk %) + Actions (Report / Workspace, Delete) */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     {/* Metrics */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -185,14 +185,14 @@ export default function HistoryPage() {
                       )}
                     </div>
 
-                    {/* Actions: Report Button & Delete Option */}
+                    {/* Actions: Dynamic Report / Workspace Button & Delete Option */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => navigate(a.risk_level ? `/report/${a.id}` : `/workspace/${a.id}`)}
+                        className={`btn btn-sm ${isReportGenerated ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => navigate(isReportGenerated ? `/report/${a.id}` : `/workspace/${a.id}`)}
                         style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
-                        📋 View Report →
+                        {isReportGenerated ? '📋 View Report →' : '🔬 View Workspace →'}
                       </button>
 
                       <button
@@ -211,7 +211,6 @@ export default function HistoryPage() {
                       >
                         {deleting === a.id ? '…' : '🗑 Delete'}
                       </button>
-                    </div>
                   </div>
                 </div>
               );

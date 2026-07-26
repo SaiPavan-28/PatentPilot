@@ -58,6 +58,7 @@ async def list_analyses(
             indication=a.indication,
             status=a.status,
             patent_count=patent_count or 0,
+            has_report=bool(report),
             risk_level=report.recommendation if report else None,
             risk_score=report.risk_score if report else None,
             created_at=a.created_at,
