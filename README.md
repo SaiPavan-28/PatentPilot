@@ -51,8 +51,6 @@ By simply typing a drug name (e.g., *Imatinib*, *Aspirin*, *Sildenafil*) or past
 
 PatentPilot's architecture decouples the React SPA presentation layer, the async FastAPI backend gateway, the dual retrieval pipeline, and the multi-agent AI engine.
 
-![System Architecture Diagram](./images/system_architecture.png)
-
 ```mermaid
 graph TD
     User([Researcher / Medicinal Chemist]) --> Frontend[React 18 TypeScript SPA: localhost:5173]
@@ -85,8 +83,6 @@ graph TD
 ## 🔄 Dual Pipeline & Agentic AI Workflow
 
 PatentPilot combines **2D structural chemical search** with **semantic literature text search** in a concurrent execution pipeline.
-
-![Dual Retrieval & Multi-Agent AI Workflow](./images/dual_pipeline_workflow.png)
 
 ```mermaid
 flowchart TD
