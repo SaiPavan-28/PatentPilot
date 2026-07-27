@@ -1,4 +1,4 @@
-# 🧪 PatentPilot 🧬🔬
+# 🧪 PatentPilot
 
 > **Autonomous AI-Assisted Freedom-to-Operate (FTO) & Patentability Screening Platform for Drug Discovery**
 
@@ -12,117 +12,86 @@
 
 ## 📌 Executive Overview
 
-**PatentPilot** is a full-stack, autonomous multi-agent platform designed to assist pharmaceutical researchers, medicinal chemists, and IP analysts in conducting rapid, preliminary **Freedom-to-Operate (FTO) and Patentability Screening**.
+**PatentPilot** is a full-stack, autonomous multi-agent platform designed to assist pharmaceutical researchers, medicinal chemists, and IP analysts in conducting rapid, preliminary **Freedom-to-Operate (FTO) and Patentability Screening**. 
 
-By simply typing a drug name (e.g., *Imatinib*, *Aspirin*, *Sildenafil*) or pasting a SMILES chemical structure, PatentPilot automatically resolves chemical identity via PubChem, searches over 110M+ compounds and millions of patents across public databases, scores structural and functional overlap using a deterministic 5-pillar hybrid model, and generates grounded, audit-ready patentability reports.
+By simply typing a drug name (e.g., *Imatinib*, *Aspirin*, *Sildenafil*) or pasting a SMILES chemical structure, PatentPilot automatically resolves chemical identity, searches over 110M+ compounds and millions of patents across public databases, scores structural and functional overlap using a deterministic 5-pillar hybrid model, and generates grounded, audit-ready patentability reports.
 
 > ⚠️ **Legal Disclaimer**: PatentPilot is a decision-support screening aid and does not replace formal Freedom-to-Operate opinions or legal advice from registered patent attorneys.
 
 ---
 
-## 📸 Application Screenshots & Features
+## 🏛️ Overall System Architecture
 
-### 1. Landing Page (Molecule Submission & Auto-SMILES)
-![Landing Page](./images/landing_page.png)
-* **Auto-SMILES Resolution:** Type a drug name (e.g. `Aspirin`, `Imatinib`) and PatentPilot automatically resolves and fills the valid SMILES string via PubChem PUG REST API.
-* **Real-time Structure Preview:** Displays live 2D chemical structure rendering (RDKit SVG) and formula metadata.
-* **Target & Disease Inputs:** Allows researchers to specify biological targets (e.g., `COX-2`, `BCR-ABL`) and therapeutic indications.
-
----
-
-### 2. Interactive Workspace & Target Pharmacology Guide
-![Interactive Workspace Page](./docs/system_architecture.svg)
-* **Instant Educational Guide:** While multi-source patent retrieval runs, displays an interactive Drug Discovery & Pharmacology Guide featuring Mechanism of Action, Target Binding, Disease Pathology, and FTO IP Strategy.
-* **Retrieved Patents List:** Shows retrieved patents with Tanimoto chemical similarity scores, assignees, publication dates, and dynamic score rings.
-
----
-
-### 3. Dedicated Patent Detail Page
-![Patent Detail Page](./docs/dual_pipeline_workflow.svg)
-* **Detailed Patent Overview:** 2-column structured view displaying abstract text, claims overview, assignee, publication date, and direct external links (Google Patents, USPTO, Espacenet, PDF).
-* **AI-Grounded Overlap Analysis:** Displays Groq LLM (Llama 3.1) grounded explanation of *why* the patent was retrieved, molecular similarity overlap, and assessment confidence score.
-
----
-
-### 4. Patentability Report
-* **5-Section FTO Screening Report:** Generates Executive Summary, Key Similar Patents, Potential Novelty Concerns, Patents Requiring Manual Review, and Overall Risk Recommendation.
-* **Clear Risk Classification Badges:** Displays one of 🟢 **`Low Patent Risk`**, 🟡 **`Requires Expert Review`**, or 🔴 **`High Patent Risk`** with documented decision rationale.
-
----
-
-### 5. Analysis History Dashboard
-* **Structured Analysis Cards:** Organizes past screening history with Molecule Name, SMILES, Target, Disease, Total Patents, Risk %, and Date.
-* **Smart Action Buttons:** Automatically renders **`📋 View Report →`** if the report has been generated, or **`🔬 View Workspace →`** if analysis is pending. Includes one-click analysis deletion.
-
----
-
-### 6. Platform Overview & About Page
-* **Architecture & Methodology:** Interactive breakdown of our 4 specialized AI Agents, 5-pillar hybrid scoring model, integrated database sources, and legal disclaimer.
-
----
-
-## 🏗️ System Architecture
-
-PatentPilot's architecture decouples the React SPA presentation layer, the async FastAPI backend gateway, the dual retrieval pipeline, and the multi-agent AI engine.
-
-![System Architecture Vector Diagram](./docs/system_architecture.svg)
-
-```mermaid
-graph TD
-    User([Researcher / Medicinal Chemist]) --> Frontend[React 18 TypeScript SPA: localhost:5173]
-    Frontend -->|HTTP / REST JSON| API[FastAPI Backend Core: localhost:8000]
-    
-    subgraph Molecule Subsystem
-        API --> Val[SMILES Validator & RDKit 2D Render]
-        API --> NameToSmiles[PubChem Name-to-SMILES Resolver]
-    end
-
-    subgraph Dual Retrieval Engine
-        API --> PubChem[PubChem 2D Fast Similarity API]
-        API --> EPMC[Europe PMC Literature API]
-        PubChem --> Parallel[asyncio.gather Parallel Pipeline]
-        EPMC --> Parallel
-    end
-
-    subgraph Multi-Agent AI Engine
-        Parallel --> ScorerAgent[Scorer & Decision Agent]
-        Parallel --> ExplainAgent[Explanation Agent: Groq Llama 3.1]
-        ExplainAgent --> ReportAgent[Report Agent]
-    end
-
-    API -->|Persistence| DB[(SQLite / PostgreSQL DB)]
-    Frontend -->|Fetch History & Reports| API
+```
+                                  ┌─────────────────────────────────────────┐
+                                  │   User Browser (React + TypeScript SPA) │
+                                  └────────────────────┬────────────────────┘
+                                                       │  REST API (HTTP/JSON)
+                                                       ▼
+                                  ┌─────────────────────────────────────────┐
+                                  │   FastAPI Backend Core (/api/v1/)       │
+                                  └────────────────────┬────────────────────┘
+                                                       │
+         ┌─────────────────────────────────────────────┼─────────────────────────────────────────────┐
+         ▼                                             ▼                                             ▼
+┌──────────────────┐                         ┌──────────────────┐                         ┌──────────────────┐
+│  Molecule Layer  │                         │ Retrieval Agent  │                         │ Multi-Agent AI   │
+├──────────────────┤                         ├──────────────────┤                         ├──────────────────┤
+│ • SMILES Valid.  │                         │ • PubChem PUG    │                         │ • Explanation    │
+│ • Name->SMILES   │                         │ • Europe PMC     │                         │   Agent (LLM)    │
+│ • 2D Structure   │                         │ • Dual Parallel  │                         │ • Scorer Agent   │
+│   SVG Render     │                         │   Execution      │                         │ • Report Agent   │
+└──────────────────┘                         └──────────────────┘                         └──────────────────┘
+                                                       │
+                                                       ▼
+                                             ┌──────────────────┐
+                                             │ Persistent DB    │
+                                             │ (SQLite / Postgres)│
+                                             └──────────────────┘
 ```
 
 ---
 
 ## 🔄 Dual Pipeline & Agentic AI Workflow
 
-PatentPilot combines **2D structural chemical search** with **semantic literature text search** in a concurrent execution pipeline.
-
-![Dual Retrieval & Multi-Agent AI Workflow](./docs/dual_pipeline_workflow.svg)
-
-```mermaid
-flowchart TD
-    A[User Input: Molecule Name/SMILES + Target + Indication] --> B[PubChem Vocabulary Expansion & Fingerprinting]
-    
-    subgraph Dual Parallel Retrieval
-        B --> C1[Primary: PubChem 2D Fast Tanimoto Similarity Search ≥75%]
-        B --> C2[Secondary: Europe PMC Full-Text & Synonym Search]
-    end
-    
-    C1 --> D[Merge, Deduplicate & Verify Patent Numbers]
-    C2 --> D
-    
-    D --> E[5-Pillar Hybrid Scoring Engine]
-    E --> F[Explanation Agent: Groq Llama 3.1 LLM]
-    F --> G[Decision Agent: Low Risk / Requires Review / High Risk]
-    G --> H[Report Agent: 5-Section Patentability Report]
+```
+User Input (Drug Name or SMILES + Target + Indication)
+   │
+   ├──► Name-to-SMILES Resolution (PubChem REST API) -> Auto-fill SMILES
+   ▼
+SMILES Validation & RDKit 2D Structure Rendering
+   │
+   ├──► 🧠 Instant 0ms Drug Discovery & Target Pharmacology Guide (loading screen)
+   ▼
+Retrieval Agent (Parallel Dual-Pipeline Execution)
+   ├──► Primary (Structural): PubChem 2D Fast Tanimoto Fingerprint Search (≥75% similarity)
+   └──► Secondary (Semantic): Synonym expansion & Europe PMC full-text search
+   │
+   ▼
+Deduplication & Verification Agent (Merges records & validates authentic patent numbers)
+   │
+   ▼
+5-Pillar Hybrid Relevance Scoring Engine
+   ├──► Chemical Structure (40%) + Target (25%) + Semantic (20%) + Disease (10%) + Recency (5%)
+   │
+   ▼
+Explanation Agent (Groq Llama 3.1 LLM)
+   ├──► Generates grounded, hallucination-free per-patent "why retrieved" & overlap analysis
+   │
+   ▼
+Decision & Recommendation Agent
+   ├──► Assigns: Low Patent Risk (<40%) | Requires Expert Review (40-74%) | High Patent Risk (≥75%)
+   │
+   ▼
+Report Agent (Assembles 5-Section Structured Patentability Report)
+   ├──► Executive Summary | Key Similar Patents | Novelty Concerns | Manual Review List | Recommendation Rationale
 ```
 
 ---
 
 ## 🤖 Modular Multi-Agent Architecture
+
+PatentPilot uses a **decoupled autonomous multi-agent architecture** where each agent enforces a strict input/output contract:
 
 | Agent Name | Module Path | Primary Responsibility | Input Contract | Output Contract |
 |---|---|---|---|---|
@@ -130,6 +99,25 @@ flowchart TD
 | **Explanation Agent** | `backend/ai/explanation_agent.py` | Grounded AI reasoning engine | Patent fields + sub-scores | Grounded Explanation JSON |
 | **Scorer & Decision Agent** | `backend/ranking/scorer.py` | 5-pillar hybrid scoring & risk classification | Raw patents + query terms | Overlap score & Risk Label |
 | **Report Agent** | `backend/ai/report_agent.py` | Patentability report synthesis | Ranked patents + explanations | 5-Section FTO Report JSON |
+
+---
+
+## 🎯 Retrieval Strategy
+
+PatentPilot solves the fundamental trade-off between **structure-only** and **text-only** patent searches using a **Dual Parallel Retrieval Pipeline**:
+
+1. **Primary Structural Pipeline (`PubChem / SureChEMBL`)**:
+   - Computes 2D Morgan/PubChem fingerprints for the submitted SMILES.
+   - Executes 2D Fast Similarity Search across 110M+ compounds in PubChem to find structurally similar compounds (Tanimoto threshold ≥ 0.75).
+   - Resolves cross-referenced Patent IDs (`PatentID` xrefs).
+
+2. **Secondary Semantic Pipeline (`Europe PMC`)**:
+   - Queries PubChem metadata to generate an expanded search vocabulary of up to 100 chemical synonyms, IUPAC names, and target/disease terms.
+   - Searches millions of patent records via Europe PMC using `resultType=core` to fetch full titles, abstracts, publication dates, and assignees.
+
+3. **Deduplication & Metadata Enrichment**:
+   - Both pipelines run concurrently via `asyncio.gather()`.
+   - The Retrieval Agent merges records by patent number, combining PubChem's structural similarity score with Europe PMC's rich full-text abstract metadata.
 
 ---
 
