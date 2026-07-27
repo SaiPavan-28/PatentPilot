@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 560" width="100%" height="100%" style="background:#0f172a; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="grad-header" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="grad-card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="950" height="60" fill="url(#grad-header)" />
+  <text x="475" y="38" fill="#ffffff" font-size="22" font-weight="800" text-anchor="middle" letter-spacing="1">DUAL RETRIEVAL &amp; MULTI-AGENT AI WORKFLOW</text>
+
+  <!-- Input Node -->
+  <g transform="translate(300, 80)" filter="url(#shadow)">
+    <rect x="0" y="0" width="350" height="50" rx="25" fill="#1e1b4b" stroke="#818cf8" stroke-width="2" />
+    <text x="175" y="31" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle">1. User Submission (Name/SMILES + Target + Indication)</text>
+  </g>
+
+  <!-- Pre-Processing split -->
+  <path d="M 475 130 L 475 155" stroke="#818cf8" stroke-width="2" />
+  <g transform="translate(250, 155)" filter="url(#shadow)">
+    <rect x="0" y="0" width="450" height="45" rx="8" fill="url(#grad-card)" stroke="#06b6d4" stroke-width="1.5" />
+    <text x="225" y="28" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">2. Pre-Processing &amp; PubChem Search Vocabulary Expansion</text>
+  </g>
+
+  <!-- Split paths for Dual Pipeline -->
+  <path d="M 330 200 L 230 235" stroke="#38bdf8" stroke-width="2.5" />
+  <path d="M 620 200 L 720 235" stroke="#a855f7" stroke-width="2.5" />
+
+  <!-- Pipeline A: Structural -->
+  <g transform="translate(60, 235)" filter="url(#shadow)">
+    <rect x="0" y="0" width="340" height="90" rx="10" fill="url(#grad-card)" stroke="#38bdf8" stroke-width="2" />
+    <text x="15" y="24" fill="#38bdf8" font-size="13" font-weight="700">PRIMARY STRUCTURAL PIPELINE</text>
+    <text x="15" y="48" fill="#f8fafc" font-size="14" font-weight="600">• PubChem 2D Fast Similarity API</text>
+    <text x="15" y="68" fill="#94a3b8" font-size="13">• Tanimoto Fingerprints (≥75% Overlap) → PatentID xrefs</text>
+  </g>
+
+  <!-- Pipeline B: Semantic -->
+  <g transform="translate(550, 235)" filter="url(#shadow)">
+    <rect x="0" y="0" width="340" height="90" rx="10" fill="url(#grad-card)" stroke="#a855f7" stroke-width="2" />
+    <text x="15" y="24" fill="#a855f7" font-size="13" font-weight="700">SECONDARY SEMANTIC PIPELINE</text>
+    <text x="15" y="48" fill="#f8fafc" font-size="14" font-weight="600">• Europe PMC Core Literature API</text>
+    <text x="15" y="68" fill="#94a3b8" font-size="13">• Full text &amp; synonym search → Core abstracts &amp; claims</text>
+  </g>
+
+  <!-- Join paths -->
+  <path d="M 230 325 L 350 360" stroke="#38bdf8" stroke-width="2.5" />
+  <path d="M 720 325 L 600 360" stroke="#a855f7" stroke-width="2.5" />
+
+  <!-- Step 4: Merge & Deduplicate -->
+  <g transform="translate(260, 360)" filter="url(#shadow)">
+    <rect x="0" y="0" width="430" height="45" rx="8" fill="url(#grad-card)" stroke="#34d399" stroke-width="1.5" />
+    <text x="215" y="28" fill="#34d399" font-size="14" font-weight="700" text-anchor="middle">3. Merge, Deduplicate &amp; Strict Patent Verification</text>
+  </g>
+
+  <!-- Step 5: 5-Pillar Scoring -->
+  <path d="M 475 405 L 475 425" stroke="#34d399" stroke-width="2" />
+  <g transform="translate(180, 425)" filter="url(#shadow)">
+    <rect x="0" y="0" width="590" height="50" rx="8" fill="url(#grad-card)" stroke="#fbbf24" stroke-width="1.5" />
+    <text x="295" y="23" fill="#fbbf24" font-size="13" font-weight="700" text-anchor="middle">4. 5-Pillar Deterministic Hybrid Scoring Engine</text>
+    <text x="295" y="41" fill="#cbd5e1" font-size="12" text-anchor="middle">Chem Sim (40%) + Target (25%) + Semantic (20%) + Disease (10%) + Recency (5%)</text>
+  </g>
+
+  <!-- Step 6: AI Explanation & Decision -->
+  <path d="M 475 475 L 475 495" stroke="#fbbf24" stroke-width="2" />
+  <g transform="translate(150, 495)" filter="url(#shadow)">
+    <rect x="0" y="0" width="650" height="50" rx="25" fill="#064e3b" stroke="#34d399" stroke-width="2" />
+    <text x="325" y="31" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle">5. Grounded Groq LLM Explanations &amp; Structured FTO Report Generation</text>
+  </g>
+</svg>
